@@ -100,14 +100,32 @@ def fetch_world_bank(selected_groups: list[str], start: int, end: int,
 
 # ── Country metadata ──────────────────────────────────────────────────────────
 
+def _extract(val):
+    """Safely extract a label from a wbgapi field that may be dict, str, or None."""
+    if isinstance(val, dict):
+        return val.get("value", "") or val.get("id", "")
+    return str(val) if val else ""
+
+
 def fetch_country_metadata() -> pd.DataFrame:
     rows = []
     for eco in wb.economy.list():
+        # wbgapi may return dict or SimpleNamespace depending on version
+        if isinstance(eco, dict):
+            code   = eco.get("id", "")
+            name   = eco.get("value", "")
+            income = _extract(eco.get("incomeLevel"))
+            region = _extract(eco.get("region"))
+        else:
+            code   = getattr(eco, "id", "")
+            name   = getattr(eco, "value", "")
+            income = _extract(getattr(eco, "incomeLevel", None))
+            region = _extract(getattr(eco, "region", None))
         rows.append({
-            "country_code":  eco.get("id", ""),
-            "country_name":  eco.get("value", ""),
-            "income_level":  (eco.get("incomeLevel") or {}).get("value", ""),
-            "region":        (eco.get("region") or {}).get("value", ""),
+            "country_code": code,
+            "country_name": name,
+            "income_level": income,
+            "region":       region,
         })
     df = pd.DataFrame(rows)
     save_data(df, "country_metadata", if_exists="replace")
