@@ -68,11 +68,12 @@ with col1:
         format_func=fmt,
     )
 
+    ctrl_options = [v for v in numeric_cols if v != y_var and v not in x_vars]
     default_ctrl = [v for v in ["ln_gdp_pc","urbanization","trade_gdp","renewable_energy"]
-                    if v in numeric_cols]
+                    if v in ctrl_options]
     control_vars = st.multiselect(
         "控制变量",
-        options=[v for v in numeric_cols if v != y_var and v not in x_vars],
+        options=ctrl_options,
         default=default_ctrl,
         format_func=fmt,
     )
